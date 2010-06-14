@@ -632,6 +632,7 @@ void CoreProtocol::init()
 	tls_started = false;
 	sasl_started = false;
 	compress_started = false;
+	sm_started = false;
 }
 
 void CoreProtocol::reset()
@@ -787,6 +788,7 @@ bool CoreProtocol::stepRequiresElement() const
 		case GetAuthSetResponse:
 		case GetRequest:
 		case GetSASLResponse:
+		case GetSMResponse:
 			return true;
 	}
 	return false;
@@ -1106,6 +1108,15 @@ bool CoreProtocol::normalStep(const QDomElement &e)
 				return loginComplete();
 		}
 
+		// deal with stream management
+		if(!sm_started && features.sm_supported) {
+			QDomElement e = doc.createElementNS(NS_STREAM_MANAGEMENT, "enable");
+			send(e);
+			event = ESend;
+			step = GetSMResponse;
+			return true;
+		}
+
 		// deal with bind
 		if(!features.bind_supported) {
 			// bind MUST be supported
@@ -1329,6 +1340,13 @@ bool CoreProtocol::normalStep(const QDomElement &e)
 				for(int n = 0; n < l.count(); ++n)
 					f.hosts += l.item(n).toElement().text();
 				hosts += f.hosts;
+			}
+
+			// check for XEP-0198 support if we are already authed
+			if (sasl_authed) {
+				QDomElement sm = e.elementsByTagNameNS(NS_STREAM_MANAGEMENT, "sm").item(0).toElement();
+				if (!sm.isNull()) f.sm_supported = true;
+				else f.sm_supported = false;
 			}
 
 			if(f.tls_supported) {
@@ -1675,6 +1693,15 @@ bool CoreProtocol::normalStep(const QDomElement &e)
 			need = NSASLNext;
 			step = GetSASLNext;
 			return false;
+		}
+	}
+	else if(step == GetSMResponse) {
+		qWarning() << "HandleSM: step";
+		if(e.namespaceURI() == NS_STREAM_MANAGEMENT && e.localName() == "enabled") {
+			qWarning() << "Stream Management enabled";
+			sm_started = true;
+			step = HandleFeatures;
+			return true;
 		}
 	}
 
