@@ -740,8 +740,16 @@ bool CoreProtocol::loginComplete()
 {
 	setReady(true);
 
-	event = EReady;
-	step = Done;
+	// deal with stream management
+	if(!sm_started && features.sm_supported) {
+		QDomElement e = doc.createElementNS(NS_STREAM_MANAGEMENT, "enable");
+		send(e);
+		event = ESend;
+		step = GetSMResponse;
+	} else {
+		event = EReady;
+		step = Done;
+	}
 	return true;
 }
 
@@ -1106,15 +1114,6 @@ bool CoreProtocol::normalStep(const QDomElement &e)
 		else {
 			if(!doBinding)
 				return loginComplete();
-		}
-
-		// deal with stream management
-		if(!sm_started && features.sm_supported) {
-			QDomElement e = doc.createElementNS(NS_STREAM_MANAGEMENT, "enable");
-			send(e);
-			event = ESend;
-			step = GetSMResponse;
-			return true;
 		}
 
 		// deal with bind
@@ -1700,7 +1699,8 @@ bool CoreProtocol::normalStep(const QDomElement &e)
 		if(e.namespaceURI() == NS_STREAM_MANAGEMENT && e.localName() == "enabled") {
 			qWarning() << "Stream Management enabled";
 			sm_started = true;
-			step = HandleFeatures;
+			event = EReady;
+			step = Done;
 			return true;
 		}
 	}
