@@ -22,6 +22,9 @@
 #include <QCoreApplication>
 #include "xmpp/jid/jid.h"
 #include "xmpp_stream.h"
+#include "xmpp_clientstream.h"
+
+#include <QDebug>
 
 using namespace XMPP;
 
@@ -456,6 +459,7 @@ public:
 
 	Stream *s;
 	QDomElement e;
+	long sm_id;
 };
 
 Stanza::Stanza()
@@ -475,6 +479,7 @@ Stanza::Stanza(Stream *s, Kind k, const Jid &to, const QString &type, const QStr
 		kind = Message;
 
 	d->s = s;
+	d->sm_id = -1;
 	if(d->s)
 		d->e = d->s->doc().createElementNS(s->baseNS(), Private::kindToString(kind));
 	if(to.isValid())
@@ -497,6 +502,7 @@ Stanza::Stanza(Stream *s, const QDomElement &e)
 	d = new Private;
 	d->s = s;
 	d->e = e;
+	d->sm_id = -1;
 }
 
 Stanza::Stanza(const Stanza &from)
@@ -652,3 +658,15 @@ void Stanza::clearError()
 		d->e.removeChild(errElem);
 }
 
+void Stanza::setSMId(long id) {
+	d->sm_id = id;
+}
+
+void Stanza::markHandled() {
+	if (d->sm_id != -1) {
+		ClientStream *cstream = qobject_cast<ClientStream *>(d->s);
+		if (cstream) cstream->markStanzaHandled(d->sm_id);
+	} else {
+		qDebug() << "SM id was never set.";
+	}
+}

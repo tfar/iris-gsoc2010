@@ -717,7 +717,7 @@ void ClientStream::sasl_nextStep(const QByteArray &stepData)
 void ClientStream::sasl_needParams(const QCA::SASL::Params& p) 
 {
 #ifdef XMPP_DEBUG
-	printf("need params: %d,%d,%d,%d\n", p.user, p.authzid, p.pass, p.realm);
+//	printf("need params: %d,%d,%d,%d\n", p.user, p.authzid, p.pass, p.realm);
 #endif
 	/*if(p.authzid && !p.user) {
 		d->sasl->setAuthzid(d->jid.bare());
@@ -1027,9 +1027,13 @@ void ClientStream::processNext()
 				printf("StanzaReady\n");
 #endif
 				// store the stanza for now, announce after processing all events
+				// TODO: add a method to the stanza to mark them handled.
 				Stanza s = createStanza(d->client.recvStanza());
 				if(s.isNull())
 					break;
+				s.setSMId(getSMStanzaId());
+				s.markHandled();
+				//if (s.kind() == Stanza::Presence) s.markHandled();
 				d->in.append(new Stanza(s));
 				break;
 			}
@@ -1200,6 +1204,15 @@ void ClientStream::doNoop()
 		d->client.sendWhitespace();
 		processNext();
 	}
+}
+
+// SM stuff
+long ClientStream::getSMStanzaId() {
+	return d->client.getNewSMId();
+}
+
+void ClientStream::markStanzaHandled(long id) {
+	d->client.markStanzaHandled(id);
 }
 
 void ClientStream::writeDirect(const QString &s)
