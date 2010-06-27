@@ -143,13 +143,10 @@ namespace XMPP
 		QString errorText() const;
 		QDomElement errorAppSpec() const;
 
-		// SM stuff
-		long getSMStanzaId();
-		void markStanzaHandled(long id);
-
 		// extra
 		void writeDirect(const QString &s);
 		void setNoopTime(int mills);
+		void ackLastMessageStanza();
 
 		// barracuda extension
 		QStringList hosts() const;
@@ -162,6 +159,7 @@ namespace XMPP
 		void warning(int);
 		void incomingXml(const QString &s);
 		void outgoingXml(const QString &s);
+		void stanzasAcked(int);
 
 	public slots:
 		void continueAfterWarning();
