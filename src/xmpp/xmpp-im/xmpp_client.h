@@ -128,6 +128,7 @@ namespace XMPP
 		void groupChatChangeNick(const QString &host, const QString &room, const QString &nick, const Status &);
 		void groupChatLeave(const QString &host, const QString &room);
 
+		bool isStreamManagementActive() const;
 	signals:
 		void activated();
 		void disconnected();

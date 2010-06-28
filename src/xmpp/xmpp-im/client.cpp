@@ -372,6 +372,10 @@ void Client::groupChatLeave(const QString &host, const QString &room)
 	}
 }
 
+bool Client::isStreamManagementActive() const {
+	return qobject_cast<ClientStream*>(d->stream);
+}
+
 /*void Client::start()
 {
 	if(d->stream->old()) {

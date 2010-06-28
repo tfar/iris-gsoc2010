@@ -1206,6 +1206,10 @@ void ClientStream::doNoop()
 }
 
 // SM stuff
+bool ClientStream::isStreamManagementActive() {
+	return true; //TODO: do actual detection here
+}
+
 void ClientStream::ackLastMessageStanza() {
 	 d->client.markLastMessageStanzaAcked();
 	 qWarning() << "StreamManagement: markLastMessageStanzaAcked";

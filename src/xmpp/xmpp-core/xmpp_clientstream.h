@@ -146,6 +146,8 @@ namespace XMPP
 		// extra
 		void writeDirect(const QString &s);
 		void setNoopTime(int mills);
+
+		bool isStreamManagementActive();
 		void ackLastMessageStanza();
 
 		// barracuda extension
