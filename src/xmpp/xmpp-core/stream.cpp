@@ -1065,6 +1065,7 @@ void ClientStream::processNext()
 			}
 			case CoreProtocol::EAck: {
 				qDebug() << "Received ack response: " << d->client.getNotableStanzasAcked();
+				emit stanzasAcked(d->client.getNotableStanzasAcked());
 			}
 		}
 	}
