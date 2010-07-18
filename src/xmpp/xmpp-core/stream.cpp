@@ -933,6 +933,15 @@ void ClientStream::processNext()
 				incomingXml(str);
 		}
 
+		printf("\tNOTIFY: %d\n", d->client.notify);
+		if (d->client.notify & CoreProtocol::NTimeout ) {
+			qDebug() << "Time = "<< d->client.timeout_sec;
+			d->timeout_timer.setSingleShot(true);
+			d->timeout_timer.start(d->client.timeout_sec * 1000);
+			d->client.notify &= ~ CoreProtocol::NTimeout;
+			qDebug() << "\tNTimeout received | Start timer";
+		}
+
 		if(!ok) {
 			bool cont = handleNeed();
 
@@ -946,13 +955,6 @@ void ClientStream::processNext()
 			if(cont)
 				continue;
 			return;
-		}
-		if (d->client.notify & CoreProtocol::NTimeout ) {
-			qDebug() << "Time = " + d->client.timeout_sec;
-			d->timeout_timer.start(d->client.timeout_sec * 1000);
-			d->timeout_timer.setSingleShot(true);
-			d->client.notify &= ~ CoreProtocol::NTimeout;
-			qDebug() << "\tNTimeout received";
 		}
 
 		int event = d->client.event;

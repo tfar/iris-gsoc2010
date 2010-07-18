@@ -1,4 +1,4 @@
-/*
+			/*
  * protocol.cpp - XMPP-Core protocol state machine
  * Copyright (C) 2004  Justin Karneges
  *
@@ -643,6 +643,13 @@ void CoreProtocol::reset()
 	init();
 }
 
+void CoreProtocol::startTimer(int seconds) {
+	sm_ack_last_requested.start();
+	notify |= NTimeout;
+	need = NNotify;
+	timeout_sec = seconds;
+}
+
 void CoreProtocol::sendStanza(const QDomElement &e, bool notify) {
 	if (isStreamManagementActive()) {
 #ifdef XMPP_TEST
@@ -654,8 +661,8 @@ void CoreProtocol::sendStanza(const QDomElement &e, bool notify) {
 			QPair<QDomElement, bool> entry = *i;
 			qDebug() << "\t" << entry.first.tagName() << " : " << entry.second;
 		}
-		if (sm_send_queue.length() > 9 && sm_send_queue.length() % 5 == 0) requestSMAcknowlegement();
-		sm_ack_last_requested.start();
+		if (sm_send_queue.length() > 5 && sm_send_queue.length() % 4 == 0) requestSMAcknowlegement();
+		startTimer(20);
 	}
 	qDebug() << "CoreProtocol::sendStanza";
 	BasicProtocol::sendStanza(e);
@@ -997,11 +1004,8 @@ bool CoreProtocol::isStreamManagementActive() const {
 
 void CoreProtocol::requestSMAcknowlegement() {
 	qDebug() << "Now I'd request acknowledgement from the server.";
-	sm_ack_last_requested.start();
 	sendDirect(QString("<r xmlns='urn:xmpp:sm:2'/>"));
-	notify |= NTimeout;
-	need = NNotify;
-	timeout_sec = 30;
+	startTimer(20);
 }
 
 int CoreProtocol::getNotableStanzasAcked() {
@@ -1824,10 +1828,7 @@ bool CoreProtocol::normalStep(const QDomElement &e)
 		if(e.namespaceURI() == NS_STREAM_MANAGEMENT && e.localName() == "enabled") {
 			qWarning() << "Stream Management enabled";
 			sm_started = true;
-			sm_ack_last_requested.start();
-			notify |= NTimeout;
-			need = NNotify;
-			timeout_sec = 30;
+			startTimer(20);
 			event = EReady;
 			step = Done;
 			return true;
@@ -1835,7 +1836,7 @@ bool CoreProtocol::normalStep(const QDomElement &e)
 	}
 
 	if (isStreamManagementActive()) {
-		if (sm_ack_last_requested.elapsed() >= 30000) {
+		if (sm_ack_last_requested.elapsed() >= 20000) {
 			requestSMAcknowlegement();
 		}
 	}
