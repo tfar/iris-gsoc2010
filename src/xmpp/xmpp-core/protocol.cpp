@@ -601,6 +601,7 @@ CoreProtocol::CoreProtocol()
 
 CoreProtocol::~CoreProtocol()
 {
+	fprintf(stderr, "\tCoreProtocol::~CoreProtocol()\n");
 }
 
 void CoreProtocol::init()
@@ -632,9 +633,12 @@ void CoreProtocol::init()
 	tls_started = false;
 	sasl_started = false;
 	compress_started = false;
+
 	sm_started = false;
 	sm_receive_count = 0;
 	sm_server_last_handled = 0;
+	sm_resumtion_supported = false;
+	sm_resumption_id = "";
 }
 
 void CoreProtocol::reset()
@@ -770,6 +774,7 @@ bool CoreProtocol::loginComplete()
 	// deal with stream management
 	if(!sm_started && features.sm_supported) {
 		QDomElement e = doc.createElementNS(NS_STREAM_MANAGEMENT, "enable");
+		e.setAttribute("resume", "true");
 		send(e);
 		event = ESend;
 		step = GetSMResponse;
@@ -1828,6 +1833,10 @@ bool CoreProtocol::normalStep(const QDomElement &e)
 		if(e.namespaceURI() == NS_STREAM_MANAGEMENT && e.localName() == "enabled") {
 			qWarning() << "Stream Management enabled";
 			sm_started = true;
+			if (e.attribute("enabled", "false") == "true" || e.attribute("enabled", "false") == "1") {
+				sm_resumtion_supported = true;
+				sm_resumption_id = e.attribute("id", "");
+			}
 			startTimer(20);
 			event = EReady;
 			step = Done;
