@@ -1790,6 +1790,10 @@ JT_DiscoItems::~JT_DiscoItems()
 	delete d;
 }
 
+Jid JT_DiscoItems::jid() const {
+	return d->jid;
+}
+
 void JT_DiscoItems::get(const DiscoItem &item)
 {
 	get(item.jid(), item.node());
